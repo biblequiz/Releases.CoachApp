@@ -1,3 +1,3 @@
 # Release.CoachApp
 
-Releases for the CoachApp Bible Quiz apps.
+Releases for the CoachApp Bible Quiz app.
