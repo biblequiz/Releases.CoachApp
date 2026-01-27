@@ -73,9 +73,9 @@ jobs:
           TAG_NAME="${{ github.event.release.tag_name }}"
           
           if [[ "$ACTION" == "deleted" || "$ACTION" == "unpublished" ]]; then
-            git commit -m "Remove release: $TAG_NAME ($ACTION)" || echo "No changes to commit"
+            git commit -m "Remove Coach's App Release: $TAG_NAME ($ACTION)" || echo "No changes to commit"
           else
-            git commit -m "Add/update release: $TAG_NAME ($ACTION)" || echo "No changes to commit"
+            git commit -m "Add/Update Coach's App Release: $TAG_NAME ($ACTION)" || echo "No changes to commit"
           fi
           
           git push
