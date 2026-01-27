@@ -1,0 +1,81 @@
+name: sync-releases-biblequiz
+on:
+  release:
+    types: [prereleased, released, deleted, unpublished]
+jobs:
+  sync-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+          owner: biblequiz
+          repositories: "BibleQuiz.com"
+
+      - name: Checkout BibleQuiz.com
+        uses: actions/checkout@v4
+        with:
+          repository: biblequiz/BibleQuiz.com
+          token: ${{ steps.generate_token.outputs.token }}
+          path: BibleQuiz.com
+      
+      - name: Display Release data
+        id: process
+        run: |
+          echo "Release action: ${{ github.event.action }}"
+          echo "Release tag: ${{ github.event.release.tag_name }}"
+          echo "Release name: ${{ github.event.release.name }}"
+          
+      - name: Process release
+        run: |
+          cd BibleQuiz.com
+          
+          # Get the tag name to use as filename
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          # Sanitize tag name for use as filename (replace / with -)
+          FILENAME=$(echo "$TAG_NAME" | sed 's/\//-/g')
+          DIRECTORY="src/releases/CoachApp"
+          FULLPATH="${DIRECTORY}/${FILENAME}.json"
+          
+          ACTION="${{ github.event.action }}"
+          if [[ -z "$FILENAME" ]]; then
+            echo "No File Name detected"
+          elif [[ "$ACTION" == "deleted" || "$ACTION" == "unpublished" ]]; then
+            # Delete the file if it exists
+            if [ -f "$FULLPATH" ]; then
+              rm "$FULLPATH"
+              echo "Deleted $FULLPATH"
+            else
+              echo "File $FULLPATH does not exist"
+            fi
+          else
+            # Create releases directory if it doesn't exist
+            mkdir -p $DIRECTORY
+            
+            # Write the entire release object to JSON file
+            cat > "$FULLPATH" << 'EOF'
+          ${{ toJSON(github.event.release) }}
+          EOF
+            echo "Created/updated ${FULLPATH}"
+          fi
+      
+      - name: Commit to BibleQuiz.com
+        run: |
+          cd BibleQuiz.com
+          git config user.name "bible-quiz-bot[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          
+          ACTION="${{ github.event.action }}"
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          
+          if [[ "$ACTION" == "deleted" || "$ACTION" == "unpublished" ]]; then
+            git commit -m "Remove release: $TAG_NAME ($ACTION)" || echo "No changes to commit"
+          else
+            git commit -m "Add/update release: $TAG_NAME ($ACTION)" || echo "No changes to commit"
+          fi
+          
+          git push
