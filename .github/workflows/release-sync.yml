@@ -33,11 +33,15 @@ jobs:
         run: |
           cd BibleQuiz.com
           
+          # Extract app name from repository name (e.g., "Releases.CoachAppUno" -> "CoachAppUno")
+          REPO_NAME="${{ github.event.repository.name }}"
+          APP_NAME="${REPO_NAME#Releases.}"
+          
           # Get the tag name to use as filename
           TAG_NAME="${{ github.event.release.tag_name }}"
           # Sanitize tag name for use as filename (replace / with -)
           FILENAME=$(echo "$TAG_NAME" | sed 's/\//-/g')
-          DIRECTORY="src/releases/CoachApp"
+          DIRECTORY="src/releases/${APP_NAME}"
           FULLPATH="${DIRECTORY}/${FILENAME}.json"
           
           ACTION="${{ github.event.action }}"
@@ -69,13 +73,17 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           
+          # Extract app name from repository name
+          REPO_NAME="${{ github.event.repository.name }}"
+          APP_NAME="${REPO_NAME#Releases.}"
+          
           ACTION="${{ github.event.action }}"
           TAG_NAME="${{ github.event.release.tag_name }}"
           
           if [[ "$ACTION" == "deleted" || "$ACTION" == "unpublished" ]]; then
-            git commit -m "Remove Coach's App Release: $TAG_NAME ($ACTION)" || echo "No changes to commit"
+            git commit -m "Remove ${APP_NAME}'s App Release: $TAG_NAME ($ACTION)" || echo "No changes to commit"
           else
-            git commit -m "Add/Update Coach's App Release: $TAG_NAME ($ACTION)" || echo "No changes to commit"
+            git commit -m "Add/Update ${APP_NAME}'s App Release: $TAG_NAME ($ACTION)" || echo "No changes to commit"
           fi
           
           git push
