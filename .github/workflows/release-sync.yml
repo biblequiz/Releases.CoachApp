@@ -5,7 +5,7 @@ on:
     types: [prereleased, released, deleted, unpublished]
 jobs:
   sync-release:
-    uses: biblequiz/ModernApps/.github/workflows/sync-release-template.yml@master
+    uses: biblequiz/BibleQuiz.com/.github/workflows/sync-release-template.yml@main
     with:
       product_name: CoachApp
       commit_changes: false
